@@ -9,25 +9,27 @@ class EditorCanvas(tk.Canvas):
 
   # Also some event handlers and such. Maybe abstract them to different classes if they get too unwieldy?  
 
-class EditorWindow():
-  def __init__(self, **kwargs):
-    self.window_width = 600
-    self.window_height = 500
-    self.root = tk.Tk()
-    self.editor_canvas = EditorCanvas(self.root, width=self.window_width // 3 * 2, height=self.window_height, background="grey")
-    self.editor_canvas.grid(row=0, column=1)
-    self.options_frame = tk.Frame(self.root, width=self.window_width // 3, height=self.window_height, background="red")
-    self.options_frame.grid(row=0, column=0)
-    self.root.bind("<Configure>", self.resize)
+class EditorWindow(tk.Tk):
+  def __init__(self, width=900, height=500, **kwargs):
+    super().__init__(**kwargs)
+
+    # Initialise direct children (or more?)
+    self.editor_canvas = EditorCanvas(self, background="grey")
+    self.editor_canvas.grid(row=0, column=1, sticky="nsew")
+    self.options_frame = tk.Frame(self, background="red")
+    self.options_frame.grid(row=0, column=0, sticky="nsew")
+
+    # Resizing config
+    self.columnconfigure(0, weight=0, minsize=250)
+    self.columnconfigure(1, weight=1)
+    self.rowconfigure(0, weight=1)
+
+    # Set width and height
+    self.geometry(f"{width}x{height}")
 
   '''Running of the application'''
   def run(self):
-    self.root.mainloop()
-
-  '''Event on window resize'''
-  def resize(self, event):
-    if event.widget == self.root and (event.width != self.window_width or event.height != self.window_height):
-      self.window_width, self.window_height = event.width, event.height
+    self.mainloop()
 
 if __name__ == "__main__":
   editor = EditorWindow()

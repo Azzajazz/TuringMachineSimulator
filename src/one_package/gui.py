@@ -5,10 +5,10 @@ class EditorCanvas(tk.Canvas):
   def __init__(self, parent, **kwargs):
     super().__init__(parent, **kwargs)
     tk.Label(self, text="Canvas for creating and editing TMs").pack()
-    # Some other state goes in here. Not sure what yet
+  
+  ### TODO: Work out how to deal with events on this canvas ###
 
-  # Also some event handlers and such. Maybe abstract them to different classes if they get too unwieldy?
-
+### TODO: Make this window prettier. ###
 class EditorWindow(tk.Tk):
   def __init__(self, width=900, height=500, **kwargs):
     super().__init__(**kwargs)

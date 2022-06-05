@@ -4,8 +4,18 @@ import tkinter.ttk as ttk
 class EditorCanvas(tk.Canvas):
   def __init__(self, parent, **kwargs):
     super().__init__(parent, **kwargs)
+
     tk.Label(self, text="Canvas for creating and editing TMs").pack()
+
+    # State for event handlers
+    self.click_mode = "state"
+
+    # Binding event handlers
+    self.bind("<Control-Button-1>", self.draw_state)
   
+  def draw_state(self, event):
+    circle_radius = 20
+    self.create_oval(event.x - circle_radius, event.y - circle_radius, event.x + circle_radius, event.y + circle_radius)
   ### TODO: Work out how to deal with events on this canvas ###
 
 ### TODO: Make this window prettier. ###
@@ -32,7 +42,7 @@ class EditorWindow(tk.Tk):
     button_frame.pack(side="top", fill="x")
     self.play_button = tk.Button(button_frame, text="Play")
     self.play_button.pack(side="left")
-    self.step_button = tk.Button(button_frame, text="Step")
+    self.step_button = tk.Button(button_frame, text="Step", command=self.on_step_click)
     self.step_button.pack(side="left")
     self.reset_button = tk.Button(button_frame, text="Reset")
     self.reset_button.pack(side="left")
@@ -43,6 +53,9 @@ class EditorWindow(tk.Tk):
 
     # Sizing the initial window
     self.geometry(f"{width}x{height}")
+
+  def on_step_click(event):
+    print("Clicked!")
 
   '''Running of the application'''
   def run(self):

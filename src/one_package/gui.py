@@ -7,14 +7,19 @@ class EditorCanvas(tk.Canvas):
 
     tk.Label(self, text="Canvas for creating and editing TMs").pack()
 
-    # State for event handlers
-    self.click_mode = "state"
-
     # Binding event handlers
-    self.bind("<Control-Button-1>", self.draw_state)
+    self.bind("<Button-1>", self.draw_state)
+    self.bind("<Shift-Button-1>", self.draw_final_state)
+    
   
   def draw_state(self, event):
     circle_radius = 20
+    self.create_oval(event.x - circle_radius, event.y - circle_radius, event.x + circle_radius, event.y + circle_radius)
+
+  def draw_final_state(self, event):
+    inner_circle_radius = 18
+    circle_radius = 20
+    self.create_oval(event.x - inner_circle_radius, event.y - inner_circle_radius, event.x + inner_circle_radius, event.y + inner_circle_radius)
     self.create_oval(event.x - circle_radius, event.y - circle_radius, event.x + circle_radius, event.y + circle_radius)
   ### TODO: Work out how to deal with events on this canvas ###
 

@@ -66,6 +66,9 @@ class EditorWindow(tk.Tk):
   def run(self):
     self.mainloop()
 
-if __name__ == "__main__":
+def main():
   editor = EditorWindow()
   editor.run()
+
+if __name__ == "__main__":
+  main()

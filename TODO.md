@@ -14,3 +14,10 @@
 - Figure out how GUI events will interface with backend
 
 # Backend
+
+- Settle on Turing Machine representation
+- Be able to step through TM
+- Be able to run TM
+- Be able to pause TM
+- Be able to add/remove states
+- Be able to add/remove transitions

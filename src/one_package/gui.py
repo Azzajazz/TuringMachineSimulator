@@ -34,7 +34,7 @@ class EditorCanvas(tk.Canvas):
   def draw_intermediate_transition(self, event):
     self.coords("drawing", self.transition_x, self.transition_y, event.x, event.y)
   
-  def finalise_transition(self, event):
+  def finalise_transition(self, _):
     self.dtag("drawing", "drawing")
   ### TODO: Work out how to deal with events on this canvas ###
 

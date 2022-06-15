@@ -1,6 +1,6 @@
 # GUI
 
-## Finish designing drawing area
+## Graphical editor 
 
 - States drawn with left-click/shift-left-click (DONE)
 - Transitions drawn by right-click and drag
@@ -9,6 +9,8 @@
 - Work out how to bind event handlers to canvas elements
 - Work out how to label states and transitions
 
-# Backend logic
+# Interface
 
 - Figure out how GUI events will interface with backend
+
+# Backend

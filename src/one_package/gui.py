@@ -7,10 +7,15 @@ class EditorCanvas(tk.Canvas):
 
     tk.Label(self, text="Canvas for creating and editing TMs").pack()
 
+    # State for event handlers
+    self.transition_x, self.transition_y = 0, 0
+
     # Binding event handlers
     self.bind("<Button-1>", self.draw_state)
     self.bind("<Shift-Button-1>", self.draw_final_state)
-    
+    self.bind("<Button-3>", self.initialise_transition)
+    self.bind("<B3-Motion>", self.draw_intermediate_transition)
+    self.bind("<ButtonRelease-3>", self.finalise_transition)
   
   def draw_state(self, event):
     circle_radius = 20
@@ -21,6 +26,16 @@ class EditorCanvas(tk.Canvas):
     circle_radius = 20
     self.create_oval(event.x - inner_circle_radius, event.y - inner_circle_radius, event.x + inner_circle_radius, event.y + inner_circle_radius)
     self.create_oval(event.x - circle_radius, event.y - circle_radius, event.x + circle_radius, event.y + circle_radius)
+
+  def initialise_transition(self, event):
+    self.transition_x, self.transition_y = event.x, event.y
+    self.create_line(self.transition_x, self.transition_y, event.x, event.y, arrow="last", tag="drawing")
+
+  def draw_intermediate_transition(self, event):
+    self.coords("drawing", self.transition_x, self.transition_y, event.x, event.y)
+  
+  def finalise_transition(self, event):
+    self.dtag("drawing", "drawing")
   ### TODO: Work out how to deal with events on this canvas ###
 
 ### TODO: Make this window prettier. ###
@@ -54,13 +69,19 @@ class EditorWindow(tk.Tk):
     self.stop_button = tk.Button(button_frame, text="Stop")
     self.stop_button.pack(side="left")
 
+    # Binding event handlers.
+    self.bind("c", self.clear_canvas)
+    
     ### TODO: There's some more stuff that needs to go in this window, but not sure what yet. ###
 
     # Sizing the initial window
     self.geometry(f"{width}x{height}")
 
-  def on_step_click(event):
+  def on_step_click(self, _):
     print("Clicked!")
+  
+  def clear_canvas(self, _):
+    self.editor_canvas.delete("all")
 
   '''Running of the application'''
   def run(self):

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+import json
 
 @dataclass
 class Tape:
@@ -62,54 +63,75 @@ class GenericTM(ABC):
 
 @dataclass
 class DeterministicTM(GenericTM):
+  states: set[str]
   transitions: dict[tuple, tuple]
-  finals: set[int]
+  finals: set[str]
+  current_state: str
   tape: Tape = Tape()
-  state: int = 0
 
-  def add_state(self):
-    pass
+  @classmethod
+  def from_json_file(cls, file):
+    with open(file, "r") as f:
+      json_info = json.load(f)
 
-  def remove_state(self):
-    pass
+    states = set(json_info['states'])
+    finals = set(json_info['finals'])
+    current_state = json_info['initial']
 
-  def add_transition(self):
-    pass
+    transitions = {}
+    for state, trans in json_info['transitions'].items():
+      for symbol, change in trans.items():
+        transitions[state, symbol] = tuple(change)
 
-  def remove_transition(self):
-    pass
+    return cls(states, transitions, finals, current_state)
+
+  def add_state(self, state: str, final: bool = False):
+    self.states.add(state)
+    if final:
+      self.finals.add(state)
+
+  def remove_state(self, state: str):
+    self.states.remove(state)
+    if state in self.finals:
+      self.finals.remove(state)
+    ### TODO: What to do with current_state? ###
+    self.current_state = None
+
+  def add_transition(self, transition: tuple):
+    input, output = transition
+    self.transitions[input] = output
+
+  def remove_transition(self, input: tuple):
+    self.transitions.pop(input)
 
   def set_input(self, input: str):
     self.tape.set_input(input)
 
-  def step(self):
-    st, symbol, direction = self.transitions[self.state, self.tape.read()]
-    self.state = st
+  def step(self) -> bool:
+    if (self.current_state, self.tape.read()) not in self.transitions:
+      return False
+    st, symbol, direction = self.transitions[self.current_state, self.tape.read()]
+    self.current_state = st
     self.tape.write(symbol)
     if direction == "R":
       self.tape.move_right()
     else:
       self.tape.move_left()
+    return True
 
-  def run(self, input: str):
-    self.set_input(input)
-    print(self)
-    while self.state not in self.finals:
-      self.step()
+  def run(self):
+    valid_transition = True
+    while self.current_state not in self.finals and valid_transition:
       print(self) 
+      valid_transition = self.step()
   
   def __repr__(self):
-    return f"State: {self.state}, Tape: ({self.tape})"
+    return f"State: {self.current_state}, Tape: ({self.tape})"
 
 def main():
-  transitions = {
-    (0, 'a') : (1, 'b', 'R'),
-    (1, 'b') : (2, 'a', 'L')
-  }
-  finals = {2}
-
-  T = DeterministicTM(transitions=transitions, finals=finals)
-  T.run("ab")
+  tm = DeterministicTM.from_json_file("test.json")
+  tm.set_input("1111")
+  tm.run()
 
 if __name__ == "__main__":
   main()

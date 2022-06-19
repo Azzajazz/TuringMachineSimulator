@@ -33,23 +33,23 @@ class Tape:
 
 class GenericTM(ABC):
   @abstractmethod
-  def add_state(self):
+  def add_state(self, state: str):
     '''Adds a state to the TM'''
   
   @abstractmethod
-  def remove_state(self):
+  def remove_state(self, state: str):
     '''Removes a state and all associated transitions from the TM'''
 
   @abstractmethod
-  def add_transition(self):
+  def add_transition(self, transition: tuple):
     '''Adds a transition to the TM'''
 
   @abstractmethod
-  def remove_transition(self):
+  def remove_transition(self, rule: tuple):
     '''Removes a transition from the TM'''
 
   @abstractmethod
-  def set_input(self, _: str):
+  def set_input(self, input: str):
     '''Sets the input of the TM'''
 
   @abstractmethod
@@ -95,14 +95,14 @@ class DeterministicTM(GenericTM):
     if state in self.finals:
       self.finals.remove(state)
     ### TODO: What to do with current_state? ###
-    self.current_state = None
+    self.current_state = ""
 
   def add_transition(self, transition: tuple):
     input, output = transition
     self.transitions[input] = output
 
-  def remove_transition(self, input: tuple):
-    self.transitions.pop(input)
+  def remove_transition(self, rule: tuple):
+    self.transitions.pop(rule)
 
   def set_input(self, input: str):
     self.tape.set_input(input)

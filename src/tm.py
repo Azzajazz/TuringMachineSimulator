@@ -33,7 +33,7 @@ class Tape:
 
 class GenericTM(ABC):
   @abstractmethod
-  def add_state(self, state: str):
+  def add_state(self, state: str, is_final: bool):
     '''Adds a state to the TM'''
   
   @abstractmethod
@@ -63,10 +63,10 @@ class GenericTM(ABC):
 
 @dataclass
 class DeterministicTM(GenericTM):
-  states: set[str]
-  transitions: dict[tuple, tuple]
-  finals: set[str]
-  current_state: str
+  current_state: str = ""
+  states: set[str] = field(default_factory=set)
+  transitions: dict[tuple, tuple] = field(default_factory=dict)
+  finals: set[str] = field(default_factory=set)
   tape: Tape = Tape()
 
   @classmethod

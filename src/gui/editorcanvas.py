@@ -1,4 +1,3 @@
-from ssl import _create_unverified_context
 import tkinter as tk
 import math
 from dataclasses import dataclass

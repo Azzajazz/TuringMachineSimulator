@@ -1,4 +1,5 @@
 import tkinter as tk
+from editorcanvas import EditorCanvas
 
 class Window(tk.Tk):
   def __init__(self, width=900, height=500, **kwargs):
@@ -12,7 +13,7 @@ class Window(tk.Tk):
     self.build_options_frame()
 
   def build_editor_canvas(self):
-    self.editor_canvas = tk.Canvas(self, bg="grey")
+    self.editor_canvas = EditorCanvas(self, bg="grey")
     self.editor_canvas.pack(side="right", fill="both", expand=True)
 
   def build_options_frame(self):

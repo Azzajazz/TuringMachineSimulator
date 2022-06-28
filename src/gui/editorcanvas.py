@@ -28,8 +28,6 @@ class EditorCanvas(tk.Canvas):
   def update_transition(self, event):
     x0, y0 = self.transition_start_x, self.transition_start_y
     x1, y1 = event.x, event.y
-    if y0 == y1:
-      return
     if x1 >= x0 and y1 >= y0:
       xmul, ymul = -1, 1
     elif x1 >= x0 and y1 < y0:
@@ -39,10 +37,13 @@ class EditorCanvas(tk.Canvas):
     else:
       xmul, ymul = 1, -1
     xM, yM = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
-    m = (x0 - x1) / (y1 - y0)
     r = 0.4 * math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-    curve_x = xmul * math.sqrt(r * r / (m * m + 1)) + xM
-    curve_y = ymul * math.sqrt(r * r - r * r / (m * m + 1)) + yM
+    if y0 == y1:
+      curve_x, curve_y = xM, yM + ymul * r
+    else:
+      m = (x0 - x1) / (y1 - y0)
+      curve_x = xmul * math.sqrt(r * r / (m * m + 1)) + xM
+      curve_y = ymul * math.sqrt(r * r - r * r / (m * m + 1)) + yM
     self.coords(
       "drawing",
       x0, y0,
@@ -106,4 +107,7 @@ where
   r = c||(x0, y0) - (x1, y1)||, with c a constant (TBD, controls the strength of the curve)
   m = (x1 - x0) / (y0 - y1)
   (xM, yM) = (0.5 * (x0 + x1), 0.5 * (y0 + y1)) is the midpoint of the line segment from (x0, y0) to (x1, y1)
+
+if y0 = y1, then m is undefined. In this case, the point that defines the curve of the transition is
+(xM, yM + ymul * r)
 '''

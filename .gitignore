@@ -1,3 +1,4 @@
 .vscode
 *.bat
 *.egg-info
+__pycache__

@@ -1,5 +1,5 @@
 import tkinter as tk
-from editorcanvas import EditorCanvas
+from editorcanvas import EditorCanvas, ToolSelection
 
 
 class Window(tk.Tk):
@@ -8,6 +8,14 @@ class Window(tk.Tk):
 
         self.build_window()
         self.geometry(f"{width}x{height}")
+
+        self.bind("n", lambda _: self.set_canvas_tool(ToolSelection.NewState))
+        self.bind("f", lambda _: self.set_canvas_tool(ToolSelection.NewStateFinal))
+        self.bind("t", lambda _: self.set_canvas_tool(ToolSelection.NewTransition))
+        self.bind("c", lambda _: self.editor_canvas.delete("all"))
+
+    def set_canvas_tool(self, tool: ToolSelection):
+        self.editor_canvas.set_tool(tool)
 
     def build_window(self):
         self.build_editor_canvas()

@@ -2,6 +2,14 @@ import tkinter as tk
 import math
 from dataclasses import dataclass
 from typing import NamedTuple, Optional
+from enum import Enum, auto
+
+
+class ToolSelection(Enum):
+    Move = auto()
+    NewState = auto()
+    NewStateFinal = auto()
+    NewTransition = auto()
 
 
 class Point(NamedTuple):
@@ -10,121 +18,135 @@ class Point(NamedTuple):
 
 
 @dataclass
-class StateInfo:
-    centre: Point
-    radius: float
-
-
-@dataclass
 class EventContext:
+    # The current editor tool
+    tool: ToolSelection = ToolSelection.NewState
+    # The transition we are currrently drawing.
     active_transition: Optional[int] = None
-    start_state: Optional[int] = None
-    end_state: Optional[int] = None
-    in_state: bool = False
-    last_mouse_pos: Point = Point(0, 0)
+    # The starting state of the transition
+    start_state: int = 0
 
 
 ### TODO: Figure out how to associate transitions with states in a way that makes maths simple.
-### TODO: Figure out an alternative to "enter while right mouse button is pressed" event for snapping transitions.
-# Holding down a mouse button blocks events from any widget except the focused one.
 class EditorCanvas(tk.Canvas):
     state_radius = 20
+    state_inner_radius = 16
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
 
         self.context = EventContext()
-        self.id_to_state_info: dict[int, StateInfo] = {}
+        self.id_to_centre: dict[int, Point] = {}
 
-        self.bind("<Button-1>", self.add_state)
-        self.bind("<B3-Motion>", self.update_transition_draw)
-        self.bind("<B3-ButtonRelease>", self.end_transition_draw)
-        self.bind("<Button-2>", lambda _: print(self.find_withtag("<Button-3>")))
+        self.bind("<Button-1>", self.tool_dispatch)
+        self.bind("<Motion>", self.update_transition)
 
-    def add_state(self, event) -> None:
+    def set_tool(self, tool: ToolSelection) -> None:
+        self.context.tool = tool
+
+    def tool_dispatch(self, event) -> None:
+        match self.context.tool:
+            case ToolSelection.NewState:
+                self.add_new_state(event)
+            case ToolSelection.NewStateFinal:
+                self.add_new_final_state(event)
+            case ToolSelection.NewTransition:
+                self.transition_click(event)
+            case ToolSelection.Move:
+                raise NotImplementedError
+
+    def add_new_state(self, event) -> None:
+        # If we click on something that already exists, don't create a new state
+        if self.find_withtag("current"):
+            return
         state_oval = self.create_oval(
             event.x - self.state_radius,
             event.y - self.state_radius,
             event.x + self.state_radius,
             event.y + self.state_radius,
             fill="white",
+            tags="state",
         )
-        state_info = StateInfo(Point(event.x, event.y), self.state_radius)
-        self.id_to_state_info[state_oval] = state_info
+        self.tag_bind(state_oval, "state")
+        self.id_to_centre[state_oval] = Point(event.x, event.y)
 
-        self.tag_bind(state_oval, "<Button-3>", self.begin_transition_draw)
-        self.tag_bind(state_oval, "<B3-Enter>", self.snap_transition)
-        self.tag_bind(state_oval, "<B3-Leave>", self.unsnap_transition)
-
-    def begin_transition_draw(self, event) -> None:
-        state_id = self.find_withtag("current")[0]
-        state_info = self.id_to_state_info[state_id]
-        anchor_point = calculate_transition_anchor(
-            state_info.centre, Point(event.x, event.y), self.state_radius
-        )
-        curve_point = calculate_curve_point(state_info.centre, Point(event.x, event.y))
-        transition = self.create_line(
-            anchor_point.x,
-            anchor_point.y,
-            curve_point.x,
-            curve_point.y,
-            event.x,
-            event.y,
-            arrow="last",
-            smooth=True,
-        )  # type: ignore
-
-        self.context.start_state = state_id
-        self.context.active_transition = transition
-
-    def update_transition_draw(self, event) -> None:
-        if self.context.in_state:
+    def add_new_final_state(self, event) -> None:
+        # If we click on something that already exists, don't create a new state
+        if self.find_withtag("current"):
             return
-        active_transition = self.context.active_transition
-        start_state = self.context.start_state
-        if active_transition is None or start_state is None:
-            return
-
-        state_info = self.id_to_state_info[start_state]
-        anchor_point = calculate_transition_anchor(
-            state_info.centre, Point(event.x, event.y), self.state_radius
+        state_oval = self.create_oval(
+            event.x - self.state_radius,
+            event.y - self.state_radius,
+            event.x + self.state_radius,
+            event.y + self.state_radius,
+            fill="white",
+            tags="state",
         )
-        curve_point = calculate_curve_point(state_info.centre, Point(event.x, event.y))
-        self.coords(
-            active_transition,
-            anchor_point.x,
-            anchor_point.y,
-            curve_point.x,
-            curve_point.y,
-            event.x,
-            event.y,
+        self.create_oval(
+            event.x - self.state_inner_radius,
+            event.y - self.state_inner_radius,
+            event.x + self.state_inner_radius,
+            event.y + self.state_inner_radius,
         )
+        self.id_to_centre[state_oval] = Point(event.x, event.y)
 
-    def end_transition_draw(self, event) -> None:
-        end_state = self.context.end_state
-        active_transition = self.context.active_transition
-        if active_transition is None:
-            return
-
-        if end_state is None:
-            self.delete(active_transition)
-        else:
+    def transition_click(self, event) -> None:
+        transition = self.context.active_transition
+        if transition:
+            clicked = self.find_overlapping(event.x, event.y, event.x, event.y)
+            if clicked and "state" in self.gettags(clicked[0]):
+                centre_start = self.id_to_centre[self.context.start_state]
+                centre = self.id_to_centre[clicked[0]]
+                anchor1 = calculate_transition_anchor(
+                    centre_start, centre, self.state_radius
+                )
+                anchor2 = calculate_transition_anchor(
+                    centre, centre_start, self.state_radius, origin=False
+                )
+                curve = calculate_curve_point(anchor1, anchor2)
+                self.coords(
+                    transition,
+                    anchor1.x,
+                    anchor1.y,
+                    curve.x,
+                    curve.y,
+                    anchor2.x,
+                    anchor2.y,
+                )
+            else:
+                self.delete(transition)
             self.context.active_transition = None
-            self.context.start_state = None
-            self.context.end_state = None
+        else:
+            clicked = self.find_withtag("current")
+            if clicked and "state" in self.gettags(clicked[0]):
+                centre = self.id_to_centre[clicked[0]]
+                anchor = calculate_transition_anchor(
+                    centre, Point(event.x, event.y), self.state_radius
+                )
+                curve = calculate_curve_point(centre, Point(event.x, event.y))
+                self.context.active_transition = self.create_line(
+                    anchor.x,
+                    anchor.y,
+                    curve.x,
+                    curve.y,
+                    event.x,
+                    event.y,
+                    smooth=True,
+                    arrow="last",
+                )  # type: ignore
+                self.context.start_state = clicked[0]
 
-    def snap_transition(self, event) -> None:
-        self.context.in_state = True
-        active_transition = self.context.active_transition
-        start_state = self.context.start_state
-        if active_transition is None or start_state is None:
+    def update_transition(self, event) -> None:
+        transition = self.context.active_transition
+        # Only update the transition if there is one being drawn
+        if transition is None:
             return
-
-        self.context.end_state = self.find_withtag("current")[0]
-
-    def unsnap_transition(self, event) -> None:
-        self.context.in_state = False
-        self.context.end_state = None
+        centre = self.id_to_centre[self.context.start_state]
+        anchor = calculate_transition_anchor(
+            centre, Point(event.x, event.y), self.state_radius
+        )
+        curve = calculate_curve_point(anchor, Point(event.x, event.y))
+        self.coords(transition, anchor.x, anchor.y, curve.x, curve.y, event.x, event.y)
 
 
 def calculate_curve_point(p0: Point, p1: Point) -> Point:
@@ -155,7 +177,9 @@ def calculate_curve_point(p0: Point, p1: Point) -> Point:
     return Point(curve_x, curve_y)
 
 
-def calculate_transition_anchor(p0: Point, p1: Point, radius: float) -> Point:
+def calculate_transition_anchor(
+    p0: Point, p1: Point, radius: float, origin: bool = True
+) -> Point:
     """
     Transition anchor points: between circles with centers (x0, y0) and (x1, y1),
     the point on the circumference where a transition will join is
@@ -168,8 +192,10 @@ def calculate_transition_anchor(p0: Point, p1: Point, radius: float) -> Point:
 
     height = p1.y - p0.y
     width = p1.x - p0.x
-    phi = math.atan2(height, width)
-    centre_x = 20 * math.cos(phi + 0.5) + p0.x
-    centre_y = 20 * math.sin(phi + 0.5) + p0.y
+    if origin:
+        phi = math.atan2(height, width) + 0.5
+    else:
+        phi = math.atan2(height, width) - 0.5
+    centre_x = 20 * math.cos(phi) + p0.x
+    centre_y = 20 * math.sin(phi) + p0.y
     return Point(centre_x, centre_y)
-

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import NamedTuple, Optional
 from enum import Enum, auto
 
-
+# TODO: Make a GUI element for selecting this
 class ToolSelection(Enum):
     Move = auto()
     NewState = auto()

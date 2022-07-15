@@ -1,5 +1,10 @@
 import tkinter as tk
-from editorcanvas import EditorCanvas, ToolSelection
+from typing import TYPE_CHECKING
+from .editorcanvas import EditorCanvas
+from .editorcanvas import ToolSelection
+
+if TYPE_CHECKING:
+    from .controller import Controller
 
 
 class Window(tk.Tk):
@@ -96,6 +101,9 @@ class Window(tk.Tk):
         self.delta_label_2.grid(row=5, column=0, sticky="w")
 
         ### TODO: There's some more stuff that needs to go in this window, but not sure what yet. ###
+
+    def set_controller(self, controller: "Controller"):
+        self.controller = controller
 
     def run(self):
         self.mainloop()

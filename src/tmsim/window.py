@@ -18,6 +18,7 @@ class Window(tk.Tk):
         self.bind("f", lambda _: self.set_canvas_tool(ToolSelection.NewStateFinal))
         self.bind("t", lambda _: self.set_canvas_tool(ToolSelection.NewTransition))
         self.bind("c", lambda _: self.editor_canvas.delete("all"))
+        self.bind("s", lambda _: self.controller.save())
 
     def set_canvas_tool(self, tool: ToolSelection):
         self.editor_canvas.set_tool(tool)
@@ -104,6 +105,7 @@ class Window(tk.Tk):
 
     def set_controller(self, controller: "Controller"):
         self.controller = controller
+        self.editor_canvas.set_controller(controller)
 
     def run(self):
         self.mainloop()

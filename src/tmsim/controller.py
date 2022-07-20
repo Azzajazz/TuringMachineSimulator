@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .turingmachine import GenericTM
@@ -12,3 +12,6 @@ class Controller:
 
     def add_state(self, name: str, is_final: bool = False):
         self.machine.add_state(name, is_final)
+
+    def save(self):
+        self.machine.save_as_json()

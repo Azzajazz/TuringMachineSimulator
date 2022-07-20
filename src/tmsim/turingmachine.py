@@ -69,24 +69,32 @@ class GenericTM(ABC):
     def set_controller(self, controller: "Controller"):
         """Set the controller for interfacing with the gui"""
 
+    @abstractmethod
+    def save_as_json(self):
+        """Save the current Turing Machine to a JSON file"""
+
 
 @dataclass
 class DeterministicTM(GenericTM):
     current_state: str = ""
     states: set[str] = field(default_factory=set)
+    alphabet: str = "ab"
     transitions: dict[tuple, tuple] = field(default_factory=dict)
+    initial_state: str = ""
     finals: set[str] = field(default_factory=set)
     tape: Tape = Tape()
     controller: Optional["Controller"] = None
 
     @classmethod
-    def from_json_file(cls, file):
+    def from_json(cls, file):
         with open(file, "r") as f:
             json_info = json.load(f)
 
-        states = set(json_info["states"])
-        finals = set(json_info["finals"])
         current_state = json_info["initial"]
+        states = set(json_info["states"])
+        alphabet = json_info(["alphabet"])
+        initial_state = json_info["initial"]
+        finals = set(json_info["finals"])
 
         transitions = {}
         for state, trans in json_info["transitions"].items():
@@ -94,10 +102,12 @@ class DeterministicTM(GenericTM):
                 transitions[state, symbol] = tuple(change)
 
         return cls(
-            states=states,
-            transitions=transitions,
-            finals=finals,
-            current_state=current_state,
+            current_state,
+            states,
+            alphabet,
+            transitions,
+            initial_state,
+            finals,
         )
 
     def add_state(self, state: str, final: bool = False):
@@ -143,12 +153,32 @@ class DeterministicTM(GenericTM):
     def set_controller(self, controller: "Controller"):
         self.controller = controller
 
+    def save_as_json(self):
+        transitions_json = {}
+        for left, right in self.transitions.items():
+            for state, symbol in left:
+                if state in transitions_json:
+                    transitions_json[state][symbol] = right
+                else:
+                    transitions_json[state] = {symbol: right}
+
+        contents = {
+            "states": list(self.states),
+            "alphabet": self.alphabet,
+            "transitions": transitions_json,  # TODO
+            "initial": self.initial_state,
+            "finals": list(self.finals),
+        }
+
+        with open("save_test.json", "w") as f:
+            json.dump(contents, f)
+
     def __repr__(self):
         return f"State: {self.current_state}, Tape: ({self.tape})"
 
 
 def main():
-    tm = DeterministicTM.from_json_file("test.json")
+    tm = DeterministicTM.from_json("test.json")
     tm.set_input("1111")
     tm.run()
 

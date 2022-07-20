@@ -1,8 +1,17 @@
 import tkinter as tk
 import math
 from dataclasses import dataclass
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, TYPE_CHECKING
 from enum import Enum, auto
+
+if TYPE_CHECKING:
+    from .controller import Controller
+
+
+class Point(NamedTuple):
+    x: float
+    y: float
+
 
 # TODO: Make a GUI element for selecting this
 class ToolSelection(Enum):
@@ -12,9 +21,15 @@ class ToolSelection(Enum):
     NewTransition = auto()
 
 
-class Point(NamedTuple):
-    x: float
-    y: float
+@dataclass
+class StateNamer:
+    current_id: int = 0
+
+    @property
+    def name(self):
+        state_name = f"q{self.current_id}"
+        self.current_id += 1
+        return state_name
 
 
 @dataclass
@@ -36,6 +51,7 @@ class EditorCanvas(tk.Canvas):
         super().__init__(parent, **kwargs)
 
         self.context = EventContext()
+        self.namer = StateNamer()
         self.id_to_centre: dict[int, Point] = {}
 
         self.bind("<Button-1>", self.tool_dispatch)
@@ -69,6 +85,7 @@ class EditorCanvas(tk.Canvas):
         )
         self.tag_bind(state_oval, "state")
         self.id_to_centre[state_oval] = Point(event.x, event.y)
+        self.controller.add_state(self.namer.name)
 
     def add_new_final_state(self, event) -> None:
         # If we click on something that already exists, don't create a new state
@@ -89,6 +106,7 @@ class EditorCanvas(tk.Canvas):
             event.y + self.state_inner_radius,
         )
         self.id_to_centre[state_oval] = Point(event.x, event.y)
+        self.controller.add_state(self.namer.name, True)
 
     def transition_click(self, event) -> None:
         transition = self.context.active_transition
@@ -147,6 +165,9 @@ class EditorCanvas(tk.Canvas):
         )
         curve = calculate_curve_point(anchor, Point(event.x, event.y))
         self.coords(transition, anchor.x, anchor.y, curve.x, curve.y, event.x, event.y)
+
+    def set_controller(self, controller: "Controller"):
+        self.controller = controller
 
 
 def calculate_curve_point(p0: Point, p1: Point) -> Point:
